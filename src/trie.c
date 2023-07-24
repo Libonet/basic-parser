@@ -1,3 +1,5 @@
+#include <stdlib.h>
+#include <ctype.h>
 #include "lib/trie.h"
 
 TRIE crearTrie(){

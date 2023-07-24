@@ -1,9 +1,6 @@
 #ifndef TRIE_H
 #define TRIE_H
 
-#include <stdlib.h>
-#include <ctype.h>
-
 // Para acceder a los hijos del TRIE usamos la funcion trieGet
 struct _TRIE
 {
