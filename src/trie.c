@@ -20,8 +20,8 @@ int hash(char letra){ // asumimos que se ingresa una letra entre 'a' y 'z'
     return letra-'a';
 }
 
-TRIE trieGet(TRIE trie, char letra){
+TRIE trieApuntarHijo(TRIE arbol, char letra){
     int pos = hash(letra);
 
-    return trie->hijos[pos];
+    return arbol->hijos[pos];
 }
