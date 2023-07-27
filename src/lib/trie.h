@@ -14,6 +14,6 @@ TRIE crearTrie();
 
 int hash(char letra);
 
-TRIE trieGet(TRIE arbol, char letra);
+TRIE trieApuntarHijo(TRIE arbol, char letra);
 
 #endif /*  TRIE_H  */
