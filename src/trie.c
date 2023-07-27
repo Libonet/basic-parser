@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include "lib/trie.h"
@@ -25,3 +26,28 @@ TRIE trieApuntarHijo(TRIE arbol, char letra){
 
     return arbol->hijos[pos];
 }
+
+// todas las palabras deben estar seguidas de un \n para funcionar
+TRIE trieDesdeArchivo(FILE* fp){
+    char c;
+    TRIE arbol = crearTrie();
+    TRIE aux = arbol;
+    
+    while(!feof(fp)){
+        c = fgetc(fp);
+        if (c == '\r')
+            continue;
+        if (c == '\n'){
+            aux->esFinal = 1;
+            aux = arbol;
+        }
+        else{
+            aux = trieApuntarHijo(aux, c);
+            if (aux == NULL)
+                aux = crearTrie();
+        }
+    }
+
+    return arbol;
+}
+
