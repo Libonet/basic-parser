@@ -28,6 +28,6 @@ TRIE trieApuntarHijo(TRIE arbol, char letra);
 TRIE trieDesdeArchivo(FILE* fp);
 
 // genera las conecciones entre nodos que permiten identificar si se esta leyendo otro prefijo al encontrar un error
-// TRIE trieOptimizarDiccionario(TRIE arbol);
+TRIE trieOptimizarDiccionario(TRIE arbol);
 
 #endif /*  TRIE_H  */

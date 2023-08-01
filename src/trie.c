@@ -1,7 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "lib/trie.h"
+#include "trie.h"
+// #include "cola.h"
 
 TRIE crearTrie(){
     TRIE nuevoTrie = malloc(sizeof(struct _TRIE));
@@ -51,3 +52,6 @@ TRIE trieDesdeArchivo(FILE* fp){
     return arbol;
 }
 
+TRIE trieOptimizarDiccionario(TRIE arbol){
+
+}
