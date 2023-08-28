@@ -7,17 +7,27 @@
 typedef struct _SALIDA
 {
     char* frase;
-    char** errores;
-    int cantErrores;
+    int capacidadFrase;
+    char* errores;
+    int* indices; // lista de indices en donde se encontraron errores
+    int capacidadErrores;
 } *SALIDA;
 
-// escribe en el archivo al que apunta "fpSalida" el contenido de "salidaParseada", formateandolo
-void fprintSalida(SALIDA salidaParseada, ssize_t largo, FILE* fpSalida);
+SALIDA crearSalida(int capacidadFrase, int capacidadErrores);
 
-SALIDA parsearPalabra(char* linea, ssize_t* largo, TRIE diccionario);
+void destruirSalida(SALIDA salida);
+
+// escribe en el archivo al que apunta "fpSalida" el contenido de "salidaParseada", bien formateado
+void fprintSalida(SALIDA salidaParseada, FILE* fpSalida);
+
+void anotarPalabra(SALIDA salida, int* largoFrase, int* inicioPalabra, int finPalabra);
+
+void anotarError(SALIDA salida, int* cantErrores, char* frase, int* inicioPalabra);
+
+void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, FILE* fpSalida);
 
 /*utilizando el diccionario, parsea las frases de la
  entrada y las guarda bien separadas en la salida*/
-void parsear(FILE* fpEntrada, FILE* fpSalida, TRIE diccionario);
+void parsearArchivo(FILE* fpEntrada, FILE* fpSalida, TRIE diccionario);
 
 #endif /*  MAIN_H  */

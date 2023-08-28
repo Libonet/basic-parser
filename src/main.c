@@ -3,42 +3,114 @@
 #include "trie.h"
 #include "main.h"
 
-void fprintSalida(SALIDA salidaParseada, ssize_t largo, FILE* fpSalida){
+#define FRASE_INICIAL 256
+#define ERROR_INICIAL 8
+
+SALIDA crearSalida(int capacidadFrase, int capacidadErrores){
+    SALIDA salida = malloc(sizeof(struct _SALIDA));
+    salida->frase = NULL;
+    salida->capacidadFrase = 0;
+    salida->errores = malloc(sizeof(char)*capacidadErrores);
+    salida->indices = malloc(sizeof(int)*capacidadErrores);
+    salida->capacidadErrores = capacidadErrores;
+
+    return salida;
+}
+
+void destruirSalida(SALIDA salida){
+    free(salida->frase);
+    free(salida->errores);
+    free(salida->indices);
+    free(salida);
+}
+
+void fprintSalida(SALIDA salidaParseada, FILE* fpSalida){
     char letra;
     char* frase = salidaParseada->frase;
-    if (salidaParseada->cantErrores==0){
-        fwrite(salidaParseada->frase, sizeof(char), largo, fpSalida);
-        
+    
+    fprintf(fpSalida, "%s ", frase);
+    for (int i=0; (letra=salidaParseada->errores[i])!='\0'; ++i)
+    {
+        fprintf(fpSalida, "%c(%d) ", letra, salidaParseada->indices[i]);
     }
+    fprintf(fpSalida, "\n");
 }
 
-SALIDA parsearPalabra(char* linea, ssize_t* largo, TRIE diccionario){
-    SALIDA salidaParseada = malloc(sizeof(struct _SALIDA));
-    salidaParseada->errores = NULL;
-    salidaParseada->cantErrores = 0;
+void anotarPalabra(SALIDA salida, int* largoFrase, int* inicioPalabra, int finPalabra){
 
-
-
-    return salidaParseada;
 }
 
-void parsear(FILE* fpEntrada, FILE* fpSalida, TRIE diccionario){
-    char *linea;
+void anotarError(SALIDA salida, int* cantErrores, char* frase, int* inicioPalabra){
+    *cantErrores++;
+    if (*cantErrores > salida->capacidadErrores){
+        salida->capacidadErrores *= 2;
+        salida->errores = realloc(salida->errores, salida->capacidadErrores);
+        salida->indices = realloc(salida->indices, salida->capacidadErrores);
+    }
+
+    salida->errores[(*cantErrores)-1] = frase[*inicioPalabra];
+    salida->indices[(*cantErrores)-1] = *inicioPalabra;
+    *inicioPalabra++;
+}
+
+void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, FILE* fpSalida){
+    int largoFrase = 0, cantErrores = 0, profundidad=0;
+    int inicioPalabra, finPalabra;
+    char letra;
+
+    TRIE estadoActual=diccionario, estadoSiguiente;
+
+    if (nleido*2 > salida->capacidadFrase){
+        salida->capacidadFrase *= 2;
+        salida->frase = realloc(salida->frase, salida->capacidadFrase);
+    }
+
+    inicioPalabra = 0;
+    finPalabra = -1; // se actualiza al encontrar un estado de aceptacion
+    int indice = 0;
+
+    letra = frase[indice];
+    while (indice < nleido-1){
+        estadoSiguiente = trieApuntarHijo(estadoActual, letra);
+        if (estadoSiguiente==NULL){ // se alcanza un estado invalido
+            if (finPalabra != -1){ // se encontro una palabra en el camino
+                anotarPalabra(salida, &largoFrase,  &inicioPalabra, finPalabra);
+                finPalabra = -1;
+            }
+            profundidad = estadoActual->profundidad;
+            estadoActual = estadoActual->sufijo; // nos movemos al sufijo mas grande
+
+            // la diferencia en profundidad nos da la cantidad de letras de error
+            for (int i = 0; i < (profundidad-estadoActual->profundidad); i++){
+                anotarError(salida, &cantErrores, frase, &inicioPalabra);
+            }
+        }
+        else{
+            indice++;
+            letra = frase[indice];
+        }
+    }
+    
+    fprintSalida(salida, fpSalida);
+}
+
+void parsearArchivo(FILE* fpEntrada, FILE* fpSalida, TRIE diccionario){
+    char *linea = NULL;
     size_t largo = 0;
     ssize_t nleido;
-    SALIDA salidaParseada;
+
+    SALIDA salida = crearSalida(FRASE_INICIAL, ERROR_INICIAL);
 
     while(!feof(fpEntrada)){
-        linea = NULL;
         if((nleido = getline(&linea, &largo, fpEntrada)) != -1) {
             printf("Retrieved line of length %zd:\n", nleido);
 
-            salidaParseada = parsearPalabra(linea, &nleido, diccionario);
-
-            fprintSalida(salidaParseada, nleido, fpSalida);
+            if (nleido > 1)
+                parsearFrase(linea, nleido, salida, diccionario, fpSalida);
         }
     }
 
+    destruirSalida(salida);
     free(linea);
 }
 
@@ -67,7 +139,7 @@ int main(int argc, char** argv){
     }
     FILE *fpSalida = fopen(argv[3], "w"); // y guardamos en la salida al mismo tiempo
     
-    parsear(fpEntrada, fpSalida, diccionario);
+    parsearArchivo(fpEntrada, fpSalida, diccionario);
 
     fclose(fpEntrada);
     fclose(fpSalida);
