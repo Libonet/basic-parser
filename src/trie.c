@@ -118,9 +118,14 @@ TRIE trieOptimizarDiccionario(TRIE arbol){
             if (hijo != NULL){
                 colaAgregarAlFinal(cola, hijo);
 
-                sufijo = padre->hijos[i];
-                while (sufijo==NULL && padre->sufijo!=NULL){
+                if (hijo->esFinal==0){ // si no es terminal buscamos su sufijo
                     sufijo = padre->hijos[i];
+                    while (sufijo==NULL && padre->sufijo!=NULL){
+                        sufijo = padre->hijos[i];
+                    }
+                    hijo->sufijo = sufijo;
+                } else{ // si es terminal, queremos que vuelva al estado inicial
+                    hijo->sufijo = raiz;
                 }
             }
         }
