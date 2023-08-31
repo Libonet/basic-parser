@@ -4,6 +4,8 @@
 #include "lib/trie.h"
 #include "lib/main.h"
 
+#include <time.h>
+
 #define FRASE_INICIAL 256
 #define ERROR_INICIAL 32
 
@@ -64,7 +66,7 @@ void anotarError(SALIDA salida, int cantErrores, char* frase, int inicioPalabra)
 
 void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, FILE* fpSalida){
     int largoFrase = 0, cantErrores = 0, profundidad = 0;
-    int inicioPalabra, finPalabra;
+    int inicioPalabra, finPalabra, indice, bandera;
     char letra;
 
     TRIE estadoActual, estadoSiguiente;
@@ -76,16 +78,14 @@ void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, 
 
     inicioPalabra = 0;
     finPalabra = -1; // se actualiza al encontrar un estado de aceptacion
-    int indice = 0;
+    indice = 0;
+    bandera = 0; // indica la finalizacion del ciclo luego de terminar el procesamiento
 
     letra = frase[indice];
     estadoActual = diccionario;
-    while (indice < nleido){
-        // if (letra=='\n'){
-        //     indice=nleido;
-        //     continue;
-        // }
-
+    while (bandera == 0){
+        if (letra == '\n')
+            bandera = 1;
         estadoSiguiente = trieApuntarHijo(estadoActual, letra); // reconocemos la letra
         if (estadoSiguiente==NULL){ // se alcanza un estado invalido
             if (finPalabra != -1){ // se encontro una palabra en el camino
@@ -161,10 +161,11 @@ int main(int argc, char** argv){
         printf("No se pudo leer el archivo\n");
         exit(1);
     }
+
     TRIE diccionario = trieDesdeArchivo(fpDiccionario);
     fclose(fpDiccionario);
 
-    diccionario = trieOptimizarDiccionario(diccionario);
+    trieOptimizarDiccionario(diccionario);
 
     FILE *fpEntrada = fopen(argv[2], "r"); // leemos la entrada
     if (fpEntrada == NULL){
