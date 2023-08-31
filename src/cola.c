@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "cola.h"
+#include "lib/cola.h"
 
 // crea una cola vacia
 COLA crearCola(){
@@ -54,12 +54,14 @@ TRIE colaLeerInicio(COLA cola){
 }
 
 void destruirCola(COLA cola){
-    struct _COLANodo* aux = cola->inicio->sig;
+    if (cola==NULL)
+        return;
+    struct _COLANodo* aux;
     while (cola->inicio != NULL)
     {
+        aux = cola->inicio->sig;
         free(cola->inicio);
         cola->inicio = aux;
-        aux = cola->inicio->sig;
     }
     free(cola);
 }
