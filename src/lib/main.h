@@ -20,9 +20,9 @@ void destruirSalida(SALIDA salida);
 // escribe en el archivo al que apunta "fpSalida" el contenido de "salidaParseada", bien formateado
 void fprintSalida(SALIDA salidaParseada, FILE* fpSalida);
 
-void anotarPalabra(SALIDA salida, int* largoFrase, int* inicioPalabra, int finPalabra);
+void anotarPalabra(SALIDA salida, char* frase, int largoFrase, int inicioPalabra, int finPalabra);
 
-void anotarError(SALIDA salida, int* cantErrores, char* frase, int* inicioPalabra);
+void anotarError(SALIDA salida, int cantErrores, char* frase, int inicioPalabra);
 
 void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, FILE* fpSalida);
 
