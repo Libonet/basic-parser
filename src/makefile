@@ -1,14 +1,16 @@
+
+
 parser: main.o trie.o cola.o
-	gcc main.o trie.o cola.o -o parser
+	gcc -Wall -g main.o trie.o cola.o -o parser
 
 main.o: main.c lib/main.h lib/trie.h lib/cola.h
-	gcc -Ilib -c main.c
+	gcc -Wall -g -Ilib -c main.c
 
 cola.o: cola.c lib/cola.h lib/trie.h
-	gcc -Ilib -c cola.c
+	gcc -Wall -g -Ilib -c cola.c
 
 trie.o: trie.c lib/trie.h
-	gcc -Ilib -c trie.c
+	gcc -Wall -g -Ilib -c trie.c
 
 clean:
 	mv main.o ./bin
