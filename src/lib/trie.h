@@ -34,6 +34,6 @@ TRIE trieDesdeArchivo(FILE* fp);
 void trieInsertarPalabra(TRIE arbol, char* palabra);
 
 // genera las conecciones entre nodos que permiten identificar si se esta leyendo otro prefijo al encontrar un error
-TRIE trieOptimizarDiccionario(TRIE arbol);
+void trieOptimizarDiccionario(TRIE arbol);
 
 #endif /*  TRIE_H  */

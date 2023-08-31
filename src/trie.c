@@ -25,6 +25,7 @@ void destruirTrie(TRIE arbol){
         for (int i=0; i<26; ++i){
             destruirTrie(arbol->hijos[i]);
         }
+        free(arbol->hijos);
     }
     free(arbol);
 }
@@ -86,22 +87,24 @@ void trieInsertarPalabra(TRIE arbol, char* palabra){
         profundidad++;
         if (hijo == NULL){
             hijo = crearTrie();
+            auxArbol->hijos[trieHash(letra)] = hijo;
+
             hijo->padre = auxArbol;
             hijo->profundidad = profundidad;
-
-            auxArbol->hijos[trieHash(letra)] = hijo;
         }
+
         auxArbol = hijo;
     }
+
     auxArbol->esFinal = 1;
 }
 
-TRIE trieOptimizarDiccionario(TRIE arbol){
+void trieOptimizarDiccionario(TRIE arbol){
     COLA cola = crearCola();
     TRIE hijo, raiz=arbol, padre, sufijo;
 
     if (arbol==NULL || arbol->hijos == NULL)
-        return arbol;
+        return;
 
     arbol->sufijo=arbol;
     for (int i=0; i<26; ++i){
@@ -125,11 +128,14 @@ TRIE trieOptimizarDiccionario(TRIE arbol){
                 colaAgregarAlFinal(cola, hijo);
 
                 if (hijo->esFinal==0){ // si no es terminal buscamos su sufijo
+                    sufijo = NULL;
                     padre = arbol; // no queremos perder la referencia al arbol
-                    sufijo = padre->sufijo->hijos[i];
+                    if (padre->sufijo->hijos != NULL)
+                        sufijo = padre->sufijo->hijos[i];
                     while (sufijo==NULL && padre->sufijo!=padre){ // si no existe el hijo
                         padre = padre->sufijo;
-                        sufijo = padre->sufijo->hijos[i];
+                        if (padre->sufijo->hijos != NULL)
+                            sufijo = padre->sufijo->hijos[i];
                     }
                     if (sufijo==NULL)
                         sufijo = raiz;
@@ -142,6 +148,4 @@ TRIE trieOptimizarDiccionario(TRIE arbol){
     }
 
     destruirCola(cola);
-
-    return raiz;
 }
