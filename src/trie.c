@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include "trie.h"
-#include "cola.h"
+#include "lib/trie.h"
+#include "lib/cola.h"
 
 
 TRIE crearTrie(){
@@ -38,24 +38,23 @@ int trieHash(char letra){
 }
 
 TRIE trieApuntarHijo(TRIE arbol, char letra){
+    if (arbol == NULL || arbol->hijos == NULL)
+        return NULL;
     int pos = trieHash(letra);
 
     return arbol->hijos[pos];
 }
 
 TRIE trieDesdeArchivo(FILE* fpEntrada){
-    int profundidad = 0;
     TRIE arbol = crearTrie();
     char *linea = NULL;
     size_t largo = 0;
     ssize_t nleido;
 
-    while(!feof(fpEntrada)){
-        if((nleido = getline(&linea, &largo, fpEntrada)) != -1){
-            printf("Retrieved line of length %zd:\n", nleido);
+    while((nleido = getline(&linea, &largo, fpEntrada)) != -1){
+        // printf("Retrieved line of length %zd:\n", nleido);
 
-            trieInsertarPalabra(arbol, linea);
-        }
+        trieInsertarPalabra(arbol, linea);
     }
 
     free(linea);
@@ -85,22 +84,26 @@ void trieInsertarPalabra(TRIE arbol, char* palabra){
 
         hijo = trieApuntarHijo(auxArbol, letra);
         profundidad++;
-        if (hijo == NULL)
+        if (hijo == NULL){
             hijo = crearTrie();
             hijo->padre = auxArbol;
             hijo->profundidad = profundidad;
 
+            auxArbol->hijos[trieHash(letra)] = hijo;
+        }
         auxArbol = hijo;
     }
+    auxArbol->esFinal = 1;
 }
 
 TRIE trieOptimizarDiccionario(TRIE arbol){
     COLA cola = crearCola();
     TRIE hijo, raiz=arbol, padre, sufijo;
 
-    if (arbol->hijos == NULL)
+    if (arbol==NULL || arbol->hijos == NULL)
         return arbol;
 
+    arbol->sufijo=arbol;
     for (int i=0; i<26; ++i){
         hijo = arbol->hijos[i];
         if (hijo != NULL){
@@ -110,19 +113,26 @@ TRIE trieOptimizarDiccionario(TRIE arbol){
     }
 
     // recorremos "breadth first" usando la cola
-    while(cola->inicio!=NULL){
+    while(cola->inicio != NULL){
         arbol = colaLeerInicio(cola);
         colaEliminarInicio(cola);
+        if (arbol->hijos == NULL)
+            continue;
+
         for (int i=0; i<26; ++i){ // i=letra-'a' (0=a, 1=b, etc)
             hijo = arbol->hijos[i];
             if (hijo != NULL){
                 colaAgregarAlFinal(cola, hijo);
 
                 if (hijo->esFinal==0){ // si no es terminal buscamos su sufijo
-                    sufijo = padre->hijos[i];
-                    while (sufijo==NULL && padre->sufijo!=NULL){
-                        sufijo = padre->hijos[i];
+                    padre = arbol; // no queremos perder la referencia al arbol
+                    sufijo = padre->sufijo->hijos[i];
+                    while (sufijo==NULL && padre->sufijo!=padre){ // si no existe el hijo
+                        padre = padre->sufijo;
+                        sufijo = padre->sufijo->hijos[i];
                     }
+                    if (sufijo==NULL)
+                        sufijo = raiz;
                     hijo->sufijo = sufijo;
                 } else{ // si es terminal, queremos que vuelva al estado inicial
                     hijo->sufijo = raiz;
@@ -132,4 +142,6 @@ TRIE trieOptimizarDiccionario(TRIE arbol){
     }
 
     destruirCola(cola);
+
+    return raiz;
 }
