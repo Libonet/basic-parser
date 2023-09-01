@@ -34,14 +34,14 @@ void fprintSalida(SALIDA salidaParseada, FILE* fpSalida){
     fprintf(fpSalida, "%s", frase);
     for (int i=0; (letra=salidaParseada->errores[i])!='\0'; ++i){
         if (i==0)
-            fprintf(fpSalida, "Errores(indice): ");
+            fprintf(fpSalida, "| Errores(indice): ");
         fprintf(fpSalida, "%c(%d) ", letra, salidaParseada->indices[i]);
     }
     fprintf(fpSalida, "\n");
 }
 
-void anotarPalabra(SALIDA salida, char* frase, int largoFrase, int inicioPalabra, int finPalabra){
-    memcpy(salida->frase + largoFrase, frase + inicioPalabra, (finPalabra+1 - inicioPalabra));
+void anotarPalabra(SALIDA salida, int largoFrase, char* palabra, int largoPalabra){
+    memcpy(salida->frase + largoFrase, palabra, largoPalabra);
 }
 
 void anotarError(SALIDA salida, int cantErrores, char* frase, int inicioPalabra){
@@ -64,17 +64,12 @@ void anotarError(SALIDA salida, int cantErrores, char* frase, int inicioPalabra)
     
 // }
 
-void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, FILE* fpSalida){
-    int largoFrase = 0, cantErrores = 0, profundidad = 0;
+void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
+    int largoFrase = 0, largoPalabra=0, cantErrores = 0, profundidad = 0;
     int inicioPalabra, finPalabra, indice, bandera;
     char letra;
 
     TRIE estadoActual, estadoSiguiente;
-
-    if (nleido*2 > salida->capacidadFrase - 1){
-        salida->capacidadFrase *= 2;
-        salida->frase = realloc(salida->frase, salida->capacidadFrase);
-    }
 
     inicioPalabra = 0;
     finPalabra = -1; // se actualiza al encontrar un estado de aceptacion
@@ -84,44 +79,52 @@ void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, 
     letra = frase[indice];
     estadoActual = diccionario;
     while (bandera == 0){
-        if (letra == '\n')
+        if (letra == '\n') // cuando se alcanza el \n completamos un ultimo ciclo
             bandera = 1;
-        estadoSiguiente = trieApuntarHijo(estadoActual, letra); // reconocemos la letra
-        if (estadoSiguiente==NULL){ // se alcanza un estado invalido
-            if (finPalabra != -1){ // se encontro una palabra en el camino
-                anotarPalabra(salida, frase, largoFrase, inicioPalabra, finPalabra);
-                largoFrase += (finPalabra+1 - inicioPalabra) + 1; // largo de la palabra + 1 espacio
-                salida->frase[largoFrase-1] = ' ';
-                inicioPalabra = finPalabra+1;
-                finPalabra = -1;
-                estadoActual = diccionario;
-                continue;
-            }
 
-            // calculamos la cantidad de errores a traves de la diferencia en profundidad (largo de la palabra) con el sufijo
-            profundidad = estadoActual->profundidad;
-            estadoActual = estadoActual->sufijo; // nos movemos al sufijo mas grande
-            if (profundidad != 0){ // si estuvieramos en la raiz, el sufijo es la misma raiz y el for nunca inicia
-                // la diferencia en profundidad nos da la cantidad de letras de error
-                for (int i = 0; i < (profundidad-estadoActual->profundidad); i++){
-                    anotarError(salida, cantErrores, frase, inicioPalabra);
-                    cantErrores++;
-                    inicioPalabra++;
-                }
-            } else{
-                anotarError(salida, cantErrores, frase, inicioPalabra);
-                cantErrores++;
-                inicioPalabra++;
-                indice++;
-                letra = frase[indice];
-            }
-        }
-        else{
+        // reconocemos la letra
+        estadoSiguiente = trieApuntarHijo(estadoActual, letra);
+
+        if (estadoSiguiente != NULL){ // alcanzamos un estado valido
             estadoActual = estadoSiguiente; // avanzamos al hijo (la letra leida)
             if (estadoActual->esFinal == 1) // si es un final de palabra, guardamos su indice
                 finPalabra = indice;
+            
             indice++;
             letra = frase[indice]; // obtenemos la siguiente letra
+        }
+        else{ // se alcanza un estado invalido
+            largoPalabra = 0;
+            if (finPalabra != -1){ // si se encontro una palabra completa en el camino
+                largoPalabra = (finPalabra+1 - inicioPalabra);
+                anotarPalabra(salida, largoFrase, frase+inicioPalabra, largoPalabra);
+                largoFrase += largoPalabra + 1; // largo de la palabra + 1 espacio
+                salida->frase[largoFrase-1] = ' ';
+
+                inicioPalabra = finPalabra+1;
+                finPalabra = -1;
+            }
+
+            if (estadoActual == diccionario && letra!='\n'){ // evitamos anotar el \n
+                anotarError(salida, cantErrores, frase, inicioPalabra);
+                cantErrores++;
+                inicioPalabra++;
+
+                indice++;
+                letra = frase[indice]; // obtenemos la siguiente letra
+                continue;
+            }
+            // calculamos la cantidad de errores a traves de la diferencia entre profundidad con 
+            // el sufijo. Ademas, le restamos la palabra que se extrajo (si la hay)
+            profundidad = estadoActual->profundidad - largoPalabra;
+            estadoActual = estadoActual->sufijo; // nos movemos al sufijo mas grande
+            
+            // la diferencia en profundidad nos da la cantidad de letras de error
+            for (int i = 0; i < (profundidad-estadoActual->profundidad); i++){
+                anotarError(salida, cantErrores, frase, inicioPalabra);
+                cantErrores++;
+                inicioPalabra++;
+            }
         }
     }
     
@@ -135,25 +138,32 @@ void parsearArchivo(FILE* fpEntrada, FILE* fpSalida, TRIE diccionario){
     ssize_t nleido;
 
     SALIDA salida = crearSalida(FRASE_INICIAL, ERROR_INICIAL);
-    salida->frase[0] = '\0';
-    salida->errores[0] = '\0';
 
+    // getline reserva la memoria necesaria para leer cada linea del archivo
     while((nleido = getline(&linea, &largo, fpEntrada)) != -1) {
         // printf("Retrieved line of length %zd:\n", nleido);
 
-        if (nleido > 1)
-            parsearFrase(linea, nleido, salida, diccionario, fpSalida);
+        if (nleido*2 > salida->capacidadFrase - 1){
+            salida->capacidadFrase *= 2;
+            salida->frase = realloc(salida->frase, salida->capacidadFrase);
+        }
+
+        if (nleido > 1){
+            salida->frase[0] = '\0';
+            salida->errores[0] = '\0';
+            parsearFrase(linea, salida, diccionario, fpSalida);
+        }
     }
 
     destruirSalida(salida);
     free(linea);
 }
 
-// Se ingresa el path a los archivos en orden: diccionario", "entrada", "salida
+// Se ingresa el path a los archivos en orden: diccionario", "entrada", "salida"
 int main(int argc, char** argv){
     if (argc != 4){
         printf("Cantidad de argumentos invalida\n");
-        return -1;
+        exit(1);
     }
 
     FILE *fpDiccionario = fopen(argv[1], "r"); // leemos el diccionario
@@ -170,6 +180,7 @@ int main(int argc, char** argv){
     FILE *fpEntrada = fopen(argv[2], "r"); // leemos la entrada
     if (fpEntrada == NULL){
         printf("No se pudo leer el archivo\n");
+        // guardarTrie(diccionario);
         destruirTrie(diccionario);
         exit(1);
     }
@@ -180,6 +191,7 @@ int main(int argc, char** argv){
     fclose(fpEntrada);
     fclose(fpSalida);
 
+    // guardarTrie(diccionario);
     destruirTrie(diccionario);
 
     return 0;

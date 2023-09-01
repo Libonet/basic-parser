@@ -39,7 +39,7 @@ int trieHash(char letra){
 }
 
 TRIE trieApuntarHijo(TRIE arbol, char letra){
-    if (arbol == NULL || arbol->hijos == NULL)
+    if (arbol == NULL || arbol->hijos == NULL || letra=='\n')
         return NULL;
     int pos = trieHash(letra);
 

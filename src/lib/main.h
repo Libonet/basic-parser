@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "trie.h"
 
+// Utilizamos esta estructura para almacenar temporalmente las frases
+// sin necesidad de volver a reservar memoria para cada una
 typedef struct _SALIDA
 {
     char* frase;
@@ -20,11 +22,11 @@ void destruirSalida(SALIDA salida);
 // escribe en el archivo al que apunta "fpSalida" el contenido de "salidaParseada", bien formateado
 void fprintSalida(SALIDA salidaParseada, FILE* fpSalida);
 
-void anotarPalabra(SALIDA salida, char* frase, int largoFrase, int inicioPalabra, int finPalabra);
+void anotarPalabra(SALIDA salida, int largoFrase, char* palabra, int largoPalabra);
 
 void anotarError(SALIDA salida, int cantErrores, char* frase, int inicioPalabra);
 
-void parsearFrase(char* frase, ssize_t nleido, SALIDA salida, TRIE diccionario, FILE* fpSalida);
+void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida);
 
 /*utilizando el diccionario, parsea las frases de la
  entrada y las guarda bien separadas en la salida*/
