@@ -1,0 +1,6 @@
+quien deposito dolares recibira dolar | Errores(indice): k(0) x(6) x(7) z(16) l(32) e(38) z(39) 
+prueba en vivo y prueba en directo | Errores(indice): j(6) a(7) j(8) a(9) j(23) a(24) j(25) a(26) 
+probando programa y | Errores(indice): x(8) e(9) l(10) x(11) x(20) z(22) 
+probando 
+quien 
+| Errores(indice): e(0) r(1) r(2) o(3) r(4) 
