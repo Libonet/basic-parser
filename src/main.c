@@ -4,8 +4,6 @@
 #include "lib/trie.h"
 #include "lib/main.h"
 
-#include <time.h>
-
 #define FRASE_INICIAL 256
 #define ERROR_INICIAL 32
 
@@ -32,9 +30,10 @@ void fprintSalida(SALIDA salidaParseada, FILE* fpSalida){
     char* frase = salidaParseada->frase;
     
     fprintf(fpSalida, "%s", frase);
+    if (salidaParseada->errores[0] != '\0'){
+        fprintf(fpSalida, "| Errores(indice): ");
+    }
     for (int i=0; (letra=salidaParseada->errores[i])!='\0'; ++i){
-        if (i==0)
-            fprintf(fpSalida, "| Errores(indice): ");
         fprintf(fpSalida, "%c(%d) ", letra, salidaParseada->indices[i]);
     }
     fprintf(fpSalida, "\n");
@@ -56,14 +55,6 @@ void anotarError(SALIDA salida, int cantErrores, char* frase, int inicioPalabra)
     salida->indices[cantErrores] = inicioPalabra;
 }
 
-// void mostrarHijos(TRIE estado){
-//     for (int i = 0; i < 26; i++)
-//     {
-//         printf("(%d)%p", i, estado->hijos[i]);
-//     }
-    
-// }
-
 void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
     int largoFrase = 0, largoPalabra=0, cantErrores = 0, profundidad = 0;
     int inicioPalabra, finPalabra, indice, bandera;
@@ -80,7 +71,7 @@ void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
     estadoActual = diccionario;
     while (bandera == 0){
         if (letra == '\n') // cuando se alcanza el \n completamos un ultimo ciclo
-            bandera = 1;
+            bandera = 1; // utilizamos este ciclo para reconocer la ultima palabra y los errores que quedan
 
         // reconocemos la letra
         estadoSiguiente = trieApuntarHijo(estadoActual, letra);
@@ -95,7 +86,7 @@ void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
         }
         else{ // se alcanza un estado invalido
             largoPalabra = 0;
-            if (finPalabra != -1){ // si se encontro una palabra completa en el camino
+            if (finPalabra != -1){ // si se encontro una palabra completa en el camino, la anotamos
                 largoPalabra = (finPalabra+1 - inicioPalabra);
                 anotarPalabra(salida, largoFrase, frase+inicioPalabra, largoPalabra);
                 largoFrase += largoPalabra + 1; // largo de la palabra + 1 espacio
@@ -105,6 +96,8 @@ void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
                 finPalabra = -1;
             }
 
+            // si nuestro estado es la raiz, entonces encontramos un error al leer la primer letra
+            // por lo que necesitamos anotar el error y avanzar el indice
             if (estadoActual == diccionario && letra!='\n'){ // evitamos anotar el \n
                 anotarError(salida, cantErrores, frase, inicioPalabra);
                 cantErrores++;
@@ -114,6 +107,7 @@ void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
                 letra = frase[indice]; // obtenemos la siguiente letra
                 continue;
             }
+
             // calculamos la cantidad de errores a traves de la diferencia entre profundidad con 
             // el sufijo. Ademas, le restamos la palabra que se extrajo (si la hay)
             profundidad = estadoActual->profundidad - largoPalabra;
