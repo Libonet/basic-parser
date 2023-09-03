@@ -41,6 +41,7 @@ int trieHash(char letra){
 TRIE trieApuntarHijo(TRIE arbol, char letra){
     if (arbol == NULL || arbol->hijos == NULL || letra=='\n')
         return NULL;
+
     int pos = trieHash(letra);
 
     return arbol->hijos[pos];
@@ -132,15 +133,20 @@ void trieOptimizarDiccionario(TRIE arbol){
                     padre = arbol; // no queremos perder la referencia al arbol
                     if (padre->sufijo->hijos != NULL)
                         sufijo = padre->sufijo->hijos[i];
-                    while (sufijo==NULL && padre->sufijo!=padre){ // si no existe el hijo
+                        
+                    // mientras que no encontremos el sufijo, y hasta llegar a la raiz
+                    while (sufijo==NULL && padre->sufijo!=padre){ 
                         padre = padre->sufijo;
                         if (padre->sufijo->hijos != NULL)
                             sufijo = padre->sufijo->hijos[i];
                     }
+
                     if (sufijo==NULL)
                         sufijo = raiz;
+                    
                     hijo->sufijo = sufijo;
-                } else{ // si es terminal, queremos que vuelva al estado inicial
+
+                } else{ // si es terminal, queremos que vuelva al estado inicial directamente
                     hijo->sufijo = raiz;
                 }
             }
