@@ -11,6 +11,7 @@ COLA crearCola(){
     return nuevaCola;
 }
 
+// agrega un nodo al final de la cola
 COLA colaAgregarAlFinal(COLA cola, TRIE nodo){
     if (cola == NULL)
         cola = crearCola();
@@ -34,11 +35,13 @@ COLA colaAgregarAlFinal(COLA cola, TRIE nodo){
     return cola;
 }
 
+// elimina el primer nodo de la cola (de haberlo)
 void colaEliminarInicio(COLA cola){
     if (cola == NULL || cola->inicio == NULL)
         return;
 
     struct _COLANodo* aux = cola->inicio->sig;
+
     free(cola->inicio);
     cola->inicio = aux;
     if (cola->inicio == NULL){
@@ -46,6 +49,7 @@ void colaEliminarInicio(COLA cola){
     }
 }
 
+// devuelve la direccion del nodo (del trie) al inicio de la cola
 TRIE colaLeerInicio(COLA cola){
     if (cola == NULL || cola->inicio == NULL)
         return NULL;
@@ -53,9 +57,11 @@ TRIE colaLeerInicio(COLA cola){
     return cola->inicio->nodo;
 }
 
+// libera todos los nodos de la cola (pero no del TRIE)
 void destruirCola(COLA cola){
     if (cola==NULL)
         return;
+
     struct _COLANodo* aux;
     while (cola->inicio != NULL)
     {

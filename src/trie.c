@@ -56,7 +56,7 @@ TRIE trieDesdeArchivo(FILE* fpEntrada){
     while((nleido = getline(&linea, &largo, fpEntrada)) != -1){
         // printf("Retrieved line of length %zd:\n", nleido);
 
-        trieInsertarPalabra(arbol, linea);
+        arbol = trieInsertarPalabra(arbol, linea);
     }
 
     free(linea);
@@ -65,13 +65,15 @@ TRIE trieDesdeArchivo(FILE* fpEntrada){
 }
 
 // inserta palabras terminadas con un \n
-void trieInsertarPalabra(TRIE arbol, char* palabra){
+TRIE trieInsertarPalabra(TRIE arbol, char* palabra){
     int i, profundidad=0;
     char letra;
     TRIE auxArbol = arbol, hijo;
 
-    if (arbol == NULL)
-        return;
+    if (arbol == NULL){
+        arbol = crearTrie();
+        auxArbol = arbol;
+    }
 
     for (i=0; (letra = palabra[i])!='\n' && letra!='\0'; ++i){
         if (letra == '\r')
@@ -98,16 +100,20 @@ void trieInsertarPalabra(TRIE arbol, char* palabra){
     }
 
     auxArbol->esFinal = 1;
+
+    return arbol;
 }
 
-void trieOptimizarDiccionario(TRIE arbol){
+void trieAhoCorasick(TRIE arbol){
     COLA cola = crearCola();
     TRIE hijo, raiz=arbol, padre, sufijo;
 
-    if (arbol==NULL || arbol->hijos == NULL)
+    arbol->sufijo=arbol;
+
+    // el arbol nunca va a ser null pero puede no tener hijos
+    if (arbol->hijos == NULL)
         return;
 
-    arbol->sufijo=arbol;
     for (int i=0; i<26; ++i){
         hijo = arbol->hijos[i];
         if (hijo != NULL){
@@ -123,8 +129,8 @@ void trieOptimizarDiccionario(TRIE arbol){
         if (arbol->hijos == NULL)
             continue;
 
-        for (int i=0; i<26; ++i){ // i=letra-'a' (0=a, 1=b, etc)
-            hijo = arbol->hijos[i];
+        for (int letra=0; letra<26; ++letra){ // letra = "letra"-'a' (0=a-a, 1=b-a, 2=c-a, etc)
+            hijo = arbol->hijos[letra];
             if (hijo != NULL){
                 colaAgregarAlFinal(cola, hijo);
 
@@ -132,16 +138,16 @@ void trieOptimizarDiccionario(TRIE arbol){
                     sufijo = NULL;
                     padre = arbol; // no queremos perder la referencia al arbol
                     if (padre->sufijo->hijos != NULL)
-                        sufijo = padre->sufijo->hijos[i];
+                        sufijo = padre->sufijo->hijos[letra];
                         
-                    // mientras que no encontremos el sufijo, y hasta llegar a la raiz
+                    // mientras que no encontremos el sufijo, hasta llegar a la raiz (y no encontrarlo)
                     while (sufijo==NULL && padre->sufijo!=padre){ 
                         padre = padre->sufijo;
                         if (padre->sufijo->hijos != NULL)
-                            sufijo = padre->sufijo->hijos[i];
+                            sufijo = padre->sufijo->hijos[letra];
                     }
 
-                    if (sufijo==NULL)
+                    if (sufijo==NULL) // si llegamos a la raiz y no lo encontramos
                         sufijo = raiz;
                     
                     hijo->sufijo = sufijo;

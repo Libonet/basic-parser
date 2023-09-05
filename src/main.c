@@ -65,7 +65,7 @@ void parsearFrase(char* frase, SALIDA salida, TRIE diccionario, FILE* fpSalida){
     inicioPalabra = 0;
     finPalabra = -1; // se actualiza al encontrar un estado de aceptacion
     indice = 0;
-    bandera = 0; // indica la finalizacion del ciclo luego de terminar el procesamiento
+    bandera = 0; // indica la finalizacion del ciclo luego de recorrer la frase
 
     letra = frase[indice];
     estadoActual = diccionario;
@@ -169,7 +169,8 @@ int main(int argc, char** argv){
     TRIE diccionario = trieDesdeArchivo(fpDiccionario);
     fclose(fpDiccionario);
 
-    trieOptimizarDiccionario(diccionario);
+    // nunca va a recibir un diccionario == NULL, por lo que no lo consideramos
+    trieAhoCorasick(diccionario);
 
     FILE *fpEntrada = fopen(argv[2], "r"); // leemos la entrada
     if (fpEntrada == NULL){

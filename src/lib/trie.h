@@ -31,9 +31,9 @@ TRIE trieApuntarHijo(TRIE arbol, char letra);
 TRIE trieDesdeArchivo(FILE* fp);
 
 // inserta palabras terminadas con un \n
-void trieInsertarPalabra(TRIE arbol, char* palabra);
+TRIE trieInsertarPalabra(TRIE arbol, char* palabra);
 
 // genera las conecciones entre nodos que permiten identificar si se esta leyendo otro prefijo al encontrar un error
-void trieOptimizarDiccionario(TRIE arbol);
+void trieAhoCorasick(TRIE arbol);
 
 #endif /*  TRIE_H  */
